@@ -1,13 +1,55 @@
-{
-  "name": "tbarenda-api",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "concurrently \"node server.js\" \"node bot.js\""
-  },
-  "dependencies": {
-    "express": "^5.1.0",
-    "node-telegram-bot-api": "^0.66.0",
-    "concurrently": "^9.0.0"
+
+const TelegramBot = require("node-telegram-bot-api");
+const fs = require("fs");
+
+const bot = new TelegramBot(process.env.BOT_TOKEN, {
+  polling: true,
+});
+
+bot.on("channel_post", async (msg) => {
+
+  let posts = [];
+
+  try{
+    posts = JSON.parse(fs.readFileSync("data.json","utf8"));
+  }catch(e){
+    posts=[];
   }
-}
+
+  const text = msg.caption  msg.text  "";
+
+  let image = "";
+
+  if(msg.photo && msg.photo.length){
+
+      const photo = msg.photo[msg.photo.length-1];
+
+      const file = await bot.getFile(photo.file_id);
+
+      image = https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path};
+
+  }
+
+  const price = text.match(/\$ ?\d+/);
+
+  posts.unshift({
+
+      title:text.split("\n")[0],
+
+      price:price ? price[0] : "",
+
+      description:text,
+
+      image:image
+
+  });
+
+  posts = posts.slice(0,50);
+
+  fs.writeFileSync("data.json",JSON.stringify(posts,null,2));
+
+  console.log("NEW POST SAVED");
+
+});
+
+console.log("Bot started");
